@@ -1,4 +1,4 @@
-import { AuthRoute } from '@/components/auth/AuthRoute';
+import AuthRoute from '@/components/auth/AuthRoute';
 import ExpenseForm from '@/components/dashboard/ExpenseForm';
 
 export default function ExpenseAddPage() {

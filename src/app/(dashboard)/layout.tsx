@@ -1,22 +1,19 @@
-"use client"
-import { AuthRoute } from '@/components/auth/AuthRoute';
+'use client';
+import AuthRoute from '@/components/auth/AuthRoute';
 import DashboardSidebar from '@/components/dashboard/Sidebar';
 import { useAuth } from '@/context/AuthContext';
+import { ReactNode } from 'react';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { isAdmin } = useAuth();
+export default function RootLayout({ children }: { children: ReactNode }) {
+  const { isAdmin } = useAuth(); // 👈 get isAdmin
 
   return (
     <AuthRoute>
-      <div className="flex h-screen bg-gray-100">
-        <DashboardSidebar isAdmin={isAdmin} />
-        <div className="flex-1 overflow-auto">
-          <div className="p-6">{children}</div>
-        </div>
+      <div className="flex min-h-screen">
+        <DashboardSidebar isAdmin={isAdmin} /> {/* 👈 pass isAdmin */}
+        <main className="flex-1 p-6 overflow-auto">
+          {children}
+        </main>
       </div>
     </AuthRoute>
   );

@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import { TrashIcon, ArrowDownTrayIcon, PencilIcon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { AuthRoute } from '../auth/AuthRoute'
+import AuthRoute from '../auth/AuthRoute'
 
 interface Expense {
   id: string

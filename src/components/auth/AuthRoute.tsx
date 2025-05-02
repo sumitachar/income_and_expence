@@ -1,6 +1,6 @@
-"use client"
+'use client';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useEffect } from 'react';
 
 interface AuthRouteProps {
@@ -8,22 +8,30 @@ interface AuthRouteProps {
   adminOnly?: boolean;
 }
 
-export const AuthRoute = ({ children, adminOnly = false }: AuthRouteProps) => {
+export default function AuthRoute({ 
+  children, 
+  adminOnly = false 
+}: AuthRouteProps) {
   const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && adminOnly && !isAdmin) {
-      router.push('/dashboard');
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else if (adminOnly && !isAdmin) {
+        router.push('/unauthorized');
+      }
     }
   }, [user, loading, isAdmin, router, adminOnly]);
 
   if (loading || !user || (adminOnly && !isAdmin)) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Verifying access...</p>
+      </div>
+    );
   }
 
   return <>{children}</>;
-};
+}

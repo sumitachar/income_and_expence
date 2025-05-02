@@ -1,5 +1,5 @@
 "use client"
-import { AuthRoute } from '@/components/auth/AuthRoute';
+import AuthRoute from '@/components/auth/AuthRoute';
 import IncomeForm from '@/components/dashboard/IncomeForm';
 
 export default function IncomeAddPage() {

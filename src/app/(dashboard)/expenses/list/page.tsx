@@ -1,4 +1,4 @@
-import { AuthRoute } from '@/components/auth/AuthRoute';
+import AuthRoute from '@/components/auth/AuthRoute';
 import ExpenseList from '@/components/dashboard/ExpenseList';
 
 export default function ExpenseListPage() {

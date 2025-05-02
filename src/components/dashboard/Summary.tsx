@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { ArrowUpIcon, ArrowDownIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
-import { AuthRoute } from '../auth/AuthRoute';
+import AuthRoute from '../auth/AuthRoute';
 
 interface SummaryData {
   totalEstimatedIncome: number;

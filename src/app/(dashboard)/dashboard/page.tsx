@@ -1,4 +1,4 @@
-import { AuthRoute } from '@/components/auth/AuthRoute';
+import AuthRoute from '@/components/auth/AuthRoute';
 import DashboardSummary from '@/components/dashboard/Summary';
 
 export default function DashboardPage() {
