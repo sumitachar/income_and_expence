@@ -16,10 +16,16 @@ export default function RegisterPage() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error('Registration failed:', err.message);
+        setError(err.message || 'Registration failed. Please try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

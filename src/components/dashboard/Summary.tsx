@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { useAuth } from '@/context/AuthContext';
 import { ArrowUpIcon, ArrowDownIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { AuthRoute } from '../auth/AuthRoute';
 
@@ -20,7 +19,6 @@ interface SummaryData {
 }
 
 export default function DashboardSummary() {
-  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<SummaryData>({
     totalEstimatedIncome: 0,

@@ -16,10 +16,16 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
-    } catch (err) {
-      setError('Invalid email or password');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err.message);
+        setError(err.message || 'Invalid email or password');
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -78,7 +84,7 @@ export default function LoginPage() {
           </div>
         </form>
         <div className="text-center text-sm">
-          Don't have an account?{' '}
+          {"Don't have an account? "}
           <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
             Register
           </Link>

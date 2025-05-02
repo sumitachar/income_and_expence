@@ -1,6 +1,5 @@
 "use client"
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/config/firebase'
@@ -39,14 +38,6 @@ export default function DashboardSidebar({ isAdmin }: SidebarProps) {
   }
 
   const toggleSidebar = () => setIsOpen(!isOpen)
-
-  const navItems = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Add Income', href: '/income/add' },
-    { title: 'Income List', href: '/income/list' },
-    { title: 'Add Expense', href: '/expenses/add' },
-    { title: 'Expense List', href: '/expenses/list' },
-  ]
 
   return (
     <>
@@ -138,7 +129,9 @@ export default function DashboardSidebar({ isAdmin }: SidebarProps) {
           <button
             onClick={() => {
               handleLogout()
-              isMobile && setIsOpen(false)
+              if (isMobile) {
+                setIsOpen(false)
+              }
             }}
             className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-md transition"
           >

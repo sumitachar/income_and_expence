@@ -141,7 +141,9 @@ export default function IncomeForm() {
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">
-              Collector's Name <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700">
+                Collector&rsquo;s Name <span className="text-red-500">*</span>
+              </label>
             </label>
             <input
               type="text"

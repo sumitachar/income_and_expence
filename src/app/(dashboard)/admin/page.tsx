@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from 'react'
-import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, query, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { TrashIcon, PencilIcon, ArrowPathIcon, ChartBarIcon, UsersIcon, CogIcon, CreditCardIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
