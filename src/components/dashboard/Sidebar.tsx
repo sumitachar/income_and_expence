@@ -44,7 +44,7 @@ export default function DashboardSidebar({ isAdmin }: SidebarProps) {
       {/* Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 right-4 z-50 p-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-lg hover:scale-105 transition"
+        className="md:hidden fixed top-3 right-3 z-50 p-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-lg hover:scale-105 transition"
       >
         {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
       </button>

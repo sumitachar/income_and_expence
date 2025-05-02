@@ -102,7 +102,7 @@ export default function DashboardSummary() {
   return (
     <AuthRoute>
       <div className="space-y-8">
-        <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+        <h1 className="text-2xl font-bold">Dashboard Overview</h1>
         
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
