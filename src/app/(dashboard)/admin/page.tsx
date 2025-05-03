@@ -1,6 +1,10 @@
 "use client"
 import { useState, useEffect } from 'react'
+<<<<<<< HEAD
 import { collection, query, getDocs, deleteDoc, doc, updateDoc, enableNetwork, disableNetwork } from 'firebase/firestore'
+=======
+import { collection, query, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore'
+>>>>>>> 531baeb858eaca466fdeb171a0b53c43743c0489
 import { db } from '@/config/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { TrashIcon, PencilIcon, ArrowPathIcon, ChartBarIcon, UsersIcon, CogIcon, CreditCardIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
