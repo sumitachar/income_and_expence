@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firebase.com {
+  match /databases/{database}/documents {
+    // User-specific rules
+    match /users/{userId} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.email == "sumitachar89@gmail.com";
+    }
+    
+    // Keep your existing rules for other collections
+    match /incomes/{incomeId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null && 
+        request.auth.token.email == "sumitachar89@gmail.com";
+    }
+    
+    match /expenses/{expenseId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null && 
+        request.auth.token.email == "sumitachar89@gmail.com";
+    }
+  }
+}
