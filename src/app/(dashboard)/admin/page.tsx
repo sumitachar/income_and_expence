@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { collection, query, getDocs, deleteDoc, doc, updateDoc, enableNetwork, disableNetwork } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { useAuth } from '@/context/AuthContext'
@@ -9,12 +9,17 @@ import autoTable from 'jspdf-autotable'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
+interface Timestamp {
+  seconds: number
+  nanoseconds?: number
+}
+
 interface AppUser {
   uid: string
   email: string | null
   isAdmin: boolean
-  createdAt: { seconds: number }
-  lastLogin?: { seconds: number }
+  createdAt: Timestamp
+  lastLogin?: Timestamp
 }
 
 export default function AdminPanel() {
@@ -31,6 +36,51 @@ export default function AdminPanel() {
   })
   const [isOnline, setIsOnline] = useState(true)
 
+  const refreshData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const usersQuery = query(collection(db, 'users'))
+      const usersSnapshot = await getDocs(usersQuery)
+
+      const usersData: AppUser[] = usersSnapshot.docs.map(doc => ({
+        uid: doc.id,
+        email: doc.data().email || null,
+        isAdmin: doc.data().isAdmin || false,
+        createdAt: doc.data().createdAt || { seconds: Date.now() / 1000 },
+        lastLogin: doc.data().lastLogin
+      }))
+      setUsers(usersData)
+
+      if (isOnline) {
+        const [incomeSnapshot, expenseSnapshot] = await Promise.all([
+          getDocs(query(collection(db, 'incomes'))),
+          getDocs(query(collection(db, 'expenses')))
+        ])
+
+        const totalIncome = incomeSnapshot.docs.reduce((sum, doc) => sum + (doc.data().depositAmount || 0), 0)
+        const totalExpenses = expenseSnapshot.docs.reduce((sum, doc) => sum + (doc.data().debitedAmount || 0), 0)
+        const activeUsers = usersData.filter(u => u.lastLogin?.seconds && u.lastLogin.seconds > Date.now() / 1000 - 2592000).length
+
+        setStats({
+          totalUsers: usersData.length,
+          activeUsers,
+          totalIncome,
+          totalExpenses,
+          netProfit: totalIncome - totalExpenses
+        })
+      }
+      toast.success('Data refreshed successfully')
+    } catch (err: unknown) {
+      console.error('Refresh error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to refresh data')
+      toast.error('Failed to refresh data')
+    } finally {
+      setLoading(false)
+    }
+  }, [isOnline])
+
+  // Update the first useEffect to include refreshData in dependencies
   useEffect(() => {
     const handleConnectionChange = () => {
       const status = navigator.onLine
@@ -63,7 +113,7 @@ export default function AdminPanel() {
     window.addEventListener('online', handleConnectionChange)
     window.addEventListener('offline', handleConnectionChange)
     setIsOnline(navigator.onLine)
-    
+
     if (!navigator.onLine) {
       disableNetwork(db)
       toast.warn('Working offline - data may be outdated', {
@@ -80,7 +130,7 @@ export default function AdminPanel() {
       window.removeEventListener('online', handleConnectionChange)
       window.removeEventListener('offline', handleConnectionChange)
     }
-  }, [])
+  }, [refreshData]) // Added refreshData to dependencies
 
   useEffect(() => {
     if (!authUser || (authUser.email !== 'sumitachar89@gmail.com' && !authUser.isAdmin)) {
@@ -88,19 +138,20 @@ export default function AdminPanel() {
       return
     }
 
+    // Update the error handling in fetchData to use proper typing
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Verify admin status first
         if (!authUser?.isAdmin && authUser?.email !== 'sumitachar89@gmail.com') {
           throw new Error('Unauthorized access');
         }
-    
+
         // Fetch users
         const usersQuery = query(collection(db, 'users'));
         const usersSnapshot = await getDocs(usersQuery);
-        
+
         const usersData: AppUser[] = usersSnapshot.docs.map(doc => ({
           uid: doc.id,
           email: doc.data().email,
@@ -108,24 +159,24 @@ export default function AdminPanel() {
           createdAt: doc.data().createdAt || { seconds: Date.now() / 1000 },
           lastLogin: doc.data().lastLogin
         }));
-    
+
         setUsers(usersData);
-        
+
         // Calculate active users (last 30 days)
         const activeUsers = usersData.filter(u => {
           const lastLoginSeconds = u.lastLogin?.seconds || 0;
           return lastLoginSeconds > Date.now() / 1000 - 2592000;
         }).length;
-    
+
         setStats(prev => ({
           ...prev,
           totalUsers: usersData.length,
           activeUsers
         }));
-    
-      } catch (err:any) {
+
+      } catch (err: unknown) { // Changed from any to unknown
         console.error('Fetch error:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
         setLoading(false);
       }
@@ -136,7 +187,7 @@ export default function AdminPanel() {
 
   const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
     if (!confirm(`Are you sure you want to ${currentStatus ? 'remove' : 'grant'} admin privileges?`)) return
-    
+
     try {
       await updateDoc(doc(db, 'users', userId), {
         isAdmin: !currentStatus
@@ -152,7 +203,7 @@ export default function AdminPanel() {
 
   const deleteUser = async (userId: string, userEmail: string | null) => {
     if (!confirm(`Are you sure you want to delete ${userEmail || 'this user'}? This cannot be undone.`)) return
-    
+
     try {
       await deleteDoc(doc(db, 'users', userId))
       const updatedUsers = users.filter(u => u.uid !== userId)
@@ -170,74 +221,32 @@ export default function AdminPanel() {
     }
   }
 
-  const refreshData = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const usersQuery = query(collection(db, 'users'))
-      const usersSnapshot = await getDocs(usersQuery)
-      
-      const usersData: AppUser[] = usersSnapshot.docs.map(doc => ({
-        uid: doc.id,
-        email: doc.data().email || null,
-        isAdmin: doc.data().isAdmin || false,
-        createdAt: doc.data().createdAt || { seconds: Date.now() / 1000 },
-        lastLogin: doc.data().lastLogin
-      }))
-      setUsers(usersData)
 
-      if (isOnline) {
-        const [incomeSnapshot, expenseSnapshot] = await Promise.all([
-          getDocs(query(collection(db, 'incomes'))),
-          getDocs(query(collection(db, 'expenses')))
-        ])
-
-        const totalIncome = incomeSnapshot.docs.reduce((sum, doc) => sum + (doc.data().depositAmount || 0), 0)
-        const totalExpenses = expenseSnapshot.docs.reduce((sum, doc) => sum + (doc.data().debitedAmount || 0), 0)
-        const activeUsers = usersData.filter(u => u.lastLogin?.seconds && u.lastLogin.seconds > Date.now() / 1000 - 2592000).length
-
-        setStats({
-          totalUsers: usersData.length,
-          activeUsers,
-          totalIncome,
-          totalExpenses,
-          netProfit: totalIncome - totalExpenses
-        })
-      }
-      toast.success('Data refreshed successfully')
-    } catch (err) {
-      console.error('Refresh error:', err)
-      setError('Failed to refresh data')
-      toast.error('Failed to refresh data')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const exportUserReport = () => {
     try {
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm' })
-      
+
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(20)
       doc.text('User Management Report', 15, 15)
-      
+
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(10)
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 15, 22)
       doc.text(`Generated by: ${authUser?.email || 'Admin'}`, 15, 27)
-      
+
       autoTable(doc, {
         body: [
           [
-            { 
+            {
               content: 'System Statistics',
-              styles: { 
+              styles: {
                 fontStyle: 'bold',
                 fontSize: 12,
                 textColor: [255, 255, 255],
                 fillColor: [79, 70, 229]
-              } 
+              }
             }
           ],
           [
@@ -255,7 +264,7 @@ export default function AdminPanel() {
           lineWidth: 0.5
         }
       })
-      
+
       autoTable(doc, {
         head: [['Email', 'Admin', 'Created', 'Last Login']],
         body: users.map(u => [
@@ -283,7 +292,7 @@ export default function AdminPanel() {
           3: { halign: 'center' }
         }
       })
-      
+
       doc.save(`user-report-${new Date().toISOString().slice(0, 10)}.pdf`)
       toast.success('Report exported successfully')
     } catch (error) {
@@ -313,7 +322,7 @@ export default function AdminPanel() {
       <div className="p-4 md:p-6 lg:p-8">
         <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
           <div className="text-red-500">{error}</div>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
           >
@@ -327,7 +336,7 @@ export default function AdminPanel() {
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <ToastContainer />
-      
+
       {!isOnline && (
         <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg flex items-center">
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -336,7 +345,7 @@ export default function AdminPanel() {
           <span>You are currently offline. Some data may be outdated.</span>
         </div>
       )}
-      
+
       <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Admin Dashboard</h1>
@@ -377,22 +386,18 @@ export default function AdminPanel() {
             <p className="text-2xl font-bold text-red-600 mt-2">${stats.totalExpenses.toFixed(2)}</p>
           </div>
 
-          <div className={`p-4 rounded-lg border ${
-            stats.netProfit >= 0 
-              ? 'bg-green-50 border-green-100' 
+          <div className={`p-4 rounded-lg border ${stats.netProfit >= 0
+              ? 'bg-green-50 border-green-100'
               : 'bg-red-50 border-red-100'
-          }`}>
-            <div className="flex items-center gap-3">
-              <ChartBarIcon className={`h-6 w-6 ${
-                stats.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
-              }`} />
-              <h3 className={`text-sm font-medium ${
-                stats.netProfit >= 0 ? 'text-green-800' : 'text-red-800'
-              }`}>Net Profit</h3>
-            </div>
-            <p className={`text-2xl font-bold mt-2 ${
-              stats.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
+            <div className="flex items-center gap-3">
+              <ChartBarIcon className={`h-6 w-6 ${stats.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
+                }`} />
+              <h3 className={`text-sm font-medium ${stats.netProfit >= 0 ? 'text-green-800' : 'text-red-800'
+                }`}>Net Profit</h3>
+            </div>
+            <p className={`text-2xl font-bold mt-2 ${stats.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
               ${stats.netProfit.toFixed(2)}
             </p>
           </div>
@@ -491,7 +496,7 @@ export default function AdminPanel() {
         <div>
           <h2 className="text-xl font-semibold text-gray-800 mb-4">System Controls</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <button 
+            <button
               onClick={refreshData}
               className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
@@ -502,7 +507,7 @@ export default function AdminPanel() {
               <CogIcon className="h-5 w-5 text-gray-600" />
               <span className="text-sm">System Settings</span>
             </button>
-            <button 
+            <button
               onClick={exportUserReport}
               className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >

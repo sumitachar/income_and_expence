@@ -158,7 +158,7 @@ export default function IncomeForm() {
           {/* Collector Name Field */}
           <div className="space-y-1">
             <label className="block text-sm sm:text-base font-medium text-gray-700">
-              আদায়কারীর নাম (Collector's Name) <span className="text-red-500">*</span>
+              আদায়কারীর নাম (Collector&apos;s Name) <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
